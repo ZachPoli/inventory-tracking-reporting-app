@@ -1,8 +1,8 @@
-# EP Inventory Management System
+# Inventory Tracking and Reporting App
 
 ## Project Overview
 
-The EP Inventory Management System is a Python-based application designed to manage, track, and export inventory data using a structured SQL database. The project simulates a real-world inventory workflow commonly found in retail, logistics, and operational environments, where accurate data handling, validation, and reporting are critical.
+The Inventory Tracking and Reporting App is a Python-based application designed to manage, track, and export inventory data using a structured SQL database. The project simulates a real-world inventory workflow commonly found in retail, logistics, and operational environments, where accurate data handling, validation, and reporting are critical.
 
 This project demonstrates my ability to work with structured datasets, interact with SQL databases, apply data validation and cleaning logic, and prepare data for downstream analysis or reporting. While operational in nature, the architecture and data workflows directly align with analytics and business intelligence use cases.
 
