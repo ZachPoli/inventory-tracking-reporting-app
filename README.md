@@ -1,240 +1,115 @@
-# Inventory Tracking and Reporting App
+# Environmental Pneumatics Inventory Tracking & Reporting App
 
-## Project Overview
+A Python/PostgreSQL inventory application I independently designed, built, and **used in a real manufacturing workflow** while working as a CNC laser operator at Environmental Pneumatics in Oakland, Tennessee.
 
-The Inventory Tracking and Reporting App is a Python-based application designed to manage, track, and export inventory data using a structured SQL database. The project simulates a real-world inventory workflow commonly found in retail, logistics, and operational environments, where accurate data handling, validation, and reporting are critical.
+## Why I Built It
 
-This project demonstrates my ability to work with structured datasets, interact with SQL databases, apply data validation and cleaning logic, and prepare data for downstream analysis or reporting. While operational in nature, the architecture and data workflows directly align with analytics and business intelligence use cases.
+Sheet-metal availability directly affected laser-production work. I wanted a faster, more structured way to track what material was on hand rather than relying only on manual observation and informal records.
 
----
+I built this system to track sheet metal by attributes such as material type, gauge/thickness, dimensions, storage location, and quantity.
 
-## Key Features
+The longer-term idea was broader shop integration. My employment ended before that full rollout was completed, so I do not describe this as a shop-wide production deployment. However, **I did personally use the database and application in my laser-operating work to track the material available to me.**
 
-* Create, read, update, and delete (CRUD) inventory records
-* SQL-based data storage and retrieval
-* Modular service-oriented architecture
-* Inventory import and export functionality
-* Data backup and recovery support
-* Barcode lookup and validation
+## What It Does
 
----
+- Create, read, update, and delete inventory records
+- Store and query structured inventory data in PostgreSQL
+- Track sheet metal by type, gauge/thickness, dimensions, location, and quantity
+- Validate inventory inputs
+- Generate and print barcode labels
+- Filter and sort stored material
+- Export CSV/XLSX data for reporting
+- Export data for ProNest-related workflows
+- Back up and restore inventory data
+- Maintain indexed fields for frequently queried inventory attributes
 
-## Technologies Used
+## Technology
 
-* **Python** – Core application logic and services
-* **SQL** – Structured data storage and querying
-* **SQLite-style database architecture** (via Python DB connection)
-* **Modular service design** – Separation of database, business logic, and utilities
+- **Python** — application and workflow logic
+- **PostgreSQL / SQL** — structured inventory storage and querying
+- **Tkinter** — desktop user interface
+- **ReportLab / Pillow** — barcode and printable-output workflows
+- **CSV / XLSX** — data exchange and reporting
+- **ProNest-related exports** — support for the CNC laser workflow
 
----
+## Why It Matters
+
+This project connects my manufacturing background directly to software development.
+
+I wasn't building an abstract portfolio exercise. I was operating CNC laser equipment, seeing an inventory problem in my own work, and building software to make that workflow more structured and useful.
+
+It demonstrates:
+
+- translating an operational problem into software requirements
+- relational data modeling
+- SQL query design
+- inventory data validation
+- CRUD application development
+- reporting/export workflows
+- barcode tooling
+- backup/recovery thinking
+- iterative development informed by real use
+
+## Representative Data Model
+
+The inventory system tracks fields such as:
+
+- barcode
+- shelf/storage location
+- thickness/gauge
+- metal type
+- dimensions
+- quantity
+- sheet length and width
+- date
+- usable scrap status
+
+Frequently searched attributes are indexed to support practical lookup workflows.
 
 ## Project Structure
 
-```
+```text
 EP_Inventory_Management/
 ├── db/
-│   ├── config.py           # Database configuration
-│   ├── connection.py      # Database connection handling
-│   └── queries.py         # Centralized SQL queries
+│   ├── config.py
+│   ├── connection.py
+│   └── queries.py
 ├── services/
-│   ├── inventory_service.py  # Core inventory logic
-│   ├── export_service.py     # Data export functionality
-│   ├── backup_service.py     # Backup and recovery
-│   └── barcode_service.py    # Barcode handling and validation
+│   ├── inventory_service.py
+│   ├── export_service.py
+│   ├── backup_service.py
+│   └── barcode_service.py
 ├── utils/
-│   └── formatting.py      # Output formatting utilities
-├── inventory_import.py    # Inventory import workflow
-├── Inventory_Management_Fixed.py  # Main application entry point
-├── requirements.txt
-└── README.md
+│   └── formatting.py
+├── inventory_import.py
+├── Inventory_Management_Fixed.py
+└── requirements.txt
 ```
 
----
+## Running Locally
 
-## Data & Analytics Relevance
+Requirements:
 
-Although this project focuses on inventory operations, it directly supports data analytics workflows:
+- Python 3.11+
+- PostgreSQL 13+
+- dependencies in `requirements.txt`
 
-* **SQL querying:** Structured queries for extracting, filtering, and validating data
-* **Data quality checks:** Handling duplicates, missing values, and invalid entries
-* **Data preparation:** Exporting clean datasets suitable for reporting or analysis
-* **Scalable design:** Modular architecture that can support analytical extensions such as summary metrics, trend analysis, or BI dashboards
+Create a local PostgreSQL database, configure the local connection, apply the inventory schema, install the Python dependencies, and run:
 
-These same patterns are commonly used in analytics pipelines and reporting systems.
-
----
-
-## Example Use Cases
-
-* Identifying low-stock items using SQL filters
-* Exporting inventory datasets for reporting or dashboarding
-* Validating incoming inventory data before storage
-* Maintaining historical inventory backups
-
----
-
-## Future Enhancements
-
-* Add aggregate SQL queries (e.g., stock trends, reorder frequency)
-* Integrate basic analytics summaries
-* Connect exported data to BI tools or dashboards
-* Add logging and monitoring for data operations
-
----
-
-## Author
-
-**Zachary Maness**
-
-This project was developed to demonstrate practical experience with Python, SQL, and data workflows relevant to junior data analyst and data scientist roles.
-
-
-# Inventory Management (Tkinter + PostgreSQL)
-
-Desktop inventory manager with barcode generation/printing, CSV/ProNest export, and backup/restore.
-
-This single document contains all steps to set up and run the app on a new Windows PC (home). macOS/Linux are similar for Python; PostgreSQL SQL is the same.
-
----
-
-## Prerequisites
-
-- Python 3.11+ (with pip)
-- PostgreSQL 13+ (local service running)
-- Optional: Visual Studio 2022 for Git integration (use __Git > Clone Repository...__)
-
----
-
-## 1) Clone the repository
-
-- Visual Studio 2022: __Git > Clone Repository...__ and paste your repo URL
-- Or command line: git clone https://github.com/<you>/<repo>.git cd <repo>
-
-
----
-
-## 2) Create and activate a Python virtual environment, then install dependencies
-
--Windows (PowerShell): python -m venv .venv ..venv\Scripts\Activate.ps1
-
--If activation is blocked, run this in the same terminal, then activate again: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass ..venv\Scripts\Activate.ps1
-
--Install dependencies from requirements.txt: python -m pip install --upgrade pip python -m pip install -r requirements.txt
-
-
----
-
-## 3) Configure the database connection
-
-Edit db/config.py so it points to your local PostgreSQL: DB_CONFIG = { "dbname": "inventory_db", "user": "postgres", "password": "<your local postgres password>", "host": "localhost", "port": "5432", }
-
-
-Optional (admin wipe password for the “WIPE DATABASE” button; default is "Zach"):
-- Set an environment variable before launching if you want to override:
-  - INVENTORY_WIPE_PASSWORD=<your password>
-
----
-
-## 4) Create the database and schema
-
-Create the database (once, in psql): CREATE DATABASE inventory_db;
-
-
-Create the schema:
-- Save the SQL below as db/schema.sql.
-- Apply it:
-  - Windows:
-    ```
-    psql -U postgres -d inventory_db -f db\schema.sql
-    ```
-  - macOS/Linux:
-    ```
-    psql -U postgres -d inventory_db -f db/schema.sql
-    ```
-
-Schema file (db/schema.sql): CREATE TABLE IF NOT EXISTS inventory ( id SERIAL PRIMARY KEY, barcode TEXT, shelf TEXT, thickness TEXT, metal_type TEXT, dimensions TEXT, location TEXT, quantity INTEGER NOT NULL DEFAULT 0, usable_scrap TEXT, date DATE, length NUMERIC(10,2), width NUMERIC(10,2) );
-CREATE INDEX IF NOT EXISTS idx_inventory_barcode ON inventory(barcode); CREATE INDEX IF NOT EXISTS idx_inventory_shelf ON inventory(shelf); CREATE INDEX IF NOT EXISTS idx_inventory_metal_type ON inventory(metal_type);
-
-
-Tip (Windows): If `psql` is not recognized, use the full path to psql.exe, e.g.: "C:\Program Files\PostgreSQL<version>\bin\psql.exe" -U postgres -d inventory_db -f db\schema.sql
-
-
----
-
-## 5) Run the app
-
-From the project root with the venv activated: python Inventory_Management_Fixed.py
-
-
----
-
-## 6) Load or import data (optional)
-
-- From another machine:
-  - Use the “Backup DB” button to export CSV/XLSX, copy the file home, then use “Restore DB” to import.
-- From a CSV:
-  - Use “Import CSV” on the View tab and follow prompts.
-
----
-
-## Features overview
-
-- Add/Edit inventory items (barcode, shelf, thickness, metal_type, dimensions, location, quantity, sheet size, date)
-- View tab: sort columns, filter by fields, numeric length/width ranges, toggle dimensions display format
-- Export CSV and ProNest CSV
-- Barcode generation:
-  - Single printable label (PNG)
-  - PDF sheets for multiple barcodes
-- Backup/Restore to/from CSV/XLSX
-
-Barcode notes:
-- PNGs save next to the app and are ignored by Git (.gitignore includes `barcode_*.png`).
-- PDF export requires ReportLab (included in requirements).
-
----
-
-## Troubleshooting
-
-- Cannot connect to DB:
-  - Verify db/config.py host="localhost", correct user/password
-  - Ensure PostgreSQL service is running (Services.msc)
-  - Test:
-    ```
-    psql -U postgres -d inventory_db -c "SELECT 1;"
-    ```
-- “relation does not exist” / missing table:
-  - Apply schema:
-    ```
-    psql -U postgres -d inventory_db -f db\schema.sql
-    ```
-- Date validation errors:
-  - Use MM-DD-YYYY or YYYY-MM-DD in the UI
-- Missing Python packages:
-  - Re-run:
-    ```
-    python -m pip install -r requirements.txt
-    ```
-- PDF export complaining about reportlab:
-  - Reinstall:
-    ```
-    python -m pip install --force-reinstall reportlab
-    ```
-- Barcode image not showing:
-  - The app writes `barcode_<code>.png` in the working folder. Verify write permissions and that Pillow is installed.
-
----
-
-## Quick reference (Windows)
-
-Activate venv
-..venv\Scripts\Activate.ps1
-Install deps
-python -m pip install -r requirements.txt
-Create DB
-psql -U postgres -d postgres -c "CREATE DATABASE inventory_db;"
-Apply schema
-psql -U postgres -d inventory_db -f db\schema.sql
-Run app
+```powershell
 python Inventory_Management_Fixed.py
+```
 
+Do not commit local database credentials.
 
+## Potential Next Steps
+
+- add inventory trend and reorder analytics
+- add production-consumption history
+- add dashboard reporting
+- formalize roles/authentication
+- further automate ProNest/material workflows
+
+---
+
+Built by **Zachary Maness** as an independently developed manufacturing/inventory tool used during his work at Environmental Pneumatics.
