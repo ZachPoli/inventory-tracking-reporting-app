@@ -14,83 +14,112 @@ The Environmental Pneumatics application is the proven starting point, not the f
 
 ## Completed in this productization pass
 
+### Security / baseline
+
 - Removed active committed PostgreSQL credentials from current `master` configuration and moved legacy PostgreSQL settings to environment variables.
 - Created the productization branch from the secured baseline.
 - Defined the streamlined product/core architecture.
 - Documented the legacy/bloat audit and refactor order.
-- Added an integration contract.
-- Added an integration registry.
+
+### Modular integrations
+
+- Added an integration contract and registry.
 - Moved ProNest-specific constants, mappings, material transformations, source-row selection, and dataframe creation out of the generic export service and into `integrations/pronest.py`.
 - Replaced Environmental Pneumatics-specific ProNest defaults with configurable/neutral adapter defaults.
 - Reduced `services/export_service.py` to generic spreadsheet export plus a temporary backward-compatible ProNest bridge for the legacy UI.
 - Added a regression test for configurable ProNest transformation.
 
+### Streamlined data core
+
+- Added generic `InventoryItem` and `InventoryMovement` domain models.
+- Added an `InventoryRepository` boundary so product code does not have to know which database is underneath it.
+- Added a zero-config embedded `SQLiteInventoryRepository`.
+- Added automatic first-run table/index creation.
+- Added generic item creation, barcode lookup, item search/listing, and quantity adjustment.
+- Added inventory movement/history recording for `receive`, `consume`, and `adjust` actions.
+- Added protection against negative resulting quantity.
+- Added platform-appropriate default application-data/database paths.
+- Added repository tests covering create -> lookup/search -> consume -> movement history and negative-quantity protection.
+
+The SQLite vertical slice was validated independently before being committed.
+
 ## Current architecture status
 
-ProNest is now implemented as an integration adapter rather than general inventory export logic.
+There are now two paths in the repository:
 
-The old Tkinter UI still calls the compatibility function in `services/export_service.py`. That wrapper resolves the ProNest integration through the registry, so existing UI behavior can remain intact while we streamline the application incrementally.
+### Legacy/reference path
 
-The current production bottleneck is now **storage/deployment coupling**: inventory services still assume PostgreSQL and a separately configured database server.
+The original Environmental Pneumatics Tkinter/PostgreSQL application remains intact as a working reference for proven features such as barcode tooling, manufacturing fields, import/export, backup/restore, and the original shop-floor workflow.
+
+### New product path
+
+The new domain/storage/integration modules are intentionally independent of the old UI and PostgreSQL implementation. They are the foundation for the streamlined Zenith Inventory product.
+
+This avoids spending months trying to clean every historical concern out of one large legacy UI file before we can test the new product experience.
 
 ## Exact next implementation task
 
-### Milestone 0B — Repository/data seam
+### Milestone 0C — Build the new thin barcode-first UI
 
-Create a storage interface that inventory/application services can call without knowing whether the underlying database is PostgreSQL or SQLite.
+Create a new product entry point on top of `SQLiteInventoryRepository` rather than adding more responsibilities to `Inventory_Management_Fixed.py`.
 
-Do **not** begin by rewriting every query. Build the smallest vertical slice needed for the primary product workflow:
+First screen/workflow:
 
-1. initialize/open data store
-2. create item
-3. fetch item by barcode
-4. list/search items
-5. adjust quantity
-6. record the adjustment as an inventory movement
+1. application opens local SQLite data store automatically
+2. scan/type barcode or SKU
+3. item is shown immediately if found
+4. user can `Receive`, `Consume`, or `Adjust`
+5. movement is recorded automatically
+6. cursor returns to scan/search for the next item
+7. user can open a simple inventory list/search view
+8. user can add a new item when a scanned barcode is unknown
 
-Then implement that slice using SQLite while keeping the legacy PostgreSQL path available until equivalence is proven.
+### First UI fields
 
-### Required model direction for the slice
+Keep the initial form intentionally small:
 
-Generic core fields:
-
-- id
-- sku/barcode
-- name/description
+- barcode/SKU
+- item name
 - category/material
 - quantity
 - unit
 - location/bin/shelf
 - minimum stock
-- supplier (optional)
-- notes (optional)
-- last updated
 
-Optional manufacturing extension fields:
+Manufacturing detail can live behind an optional/details section:
 
 - thickness/gauge
 - dimensions
 - grade/material details
+- supplier
+- notes
 
-Movement record fields:
+### Not on the primary screen
 
-- id
-- item id
-- timestamp
-- movement type (`receive`, `consume`, `adjust`)
-- quantity delta
-- resulting quantity
-- note/source (optional)
+- ProNest-specific controls
+- barcode migration/rebuild utilities
+- database wipe/developer maintenance tools
+- raw database controls
+- every possible report
+- future ERP/machine integrations
 
-## Task after the SQLite vertical slice
+Those belong in secondary screens, optional modules, or developer tooling.
 
-### Milestone 0C — Primary UI simplification
+## Task after the thin UI
 
-Replace the current all-in-one add/edit workflow with the product's primary loop:
+### Milestone 0D — Bring proven capabilities across deliberately
 
-`scan/search -> item -> receive / consume / adjust -> movement recorded -> ready for next scan`
+Once the new barcode loop is pleasant to use, migrate only the valuable existing features:
 
-Secondary actions such as import/export, labels, backup, reporting, and integrations should remain available without dominating the primary screen.
+1. CSV/XLSX import with preview/validation
+2. barcode/label printing
+3. backup/restore for the SQLite database
+4. low-stock view
+5. activity/history view
+6. generic spreadsheet export
+7. Integrations screen with ProNest as adapter #1
+
+Do not port legacy code merely because it exists.
 
 ## Near-term acceptance target
 
@@ -115,5 +144,5 @@ External factory software is expected to vary.
 - no cloud/multi-user work before local trial evidence
 - no customer-specific machine/ERP logic in the core
 - no new integration unless a real workflow justifies it
-- no deletion of legacy behavior until equivalent core behavior is verified
-- no adding features while installation and primary inventory flow remain painful
+- no deletion of legacy behavior until equivalent product behavior is verified
+- no feature porting while installation and primary inventory flow remain painful
