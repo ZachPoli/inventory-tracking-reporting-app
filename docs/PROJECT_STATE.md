@@ -4,6 +4,8 @@
 
 `product/streamlined-modular-core`
 
+Draft PR: #2 — `Productize inventory app around a streamlined modular core`
+
 ## Product direction
 
 **Simple barcode-first inventory for small industrial teams that have outgrown spreadsheets but do not want a full ERP rollout.**
@@ -18,39 +20,77 @@ The Environmental Pneumatics application is the proven starting point, not the f
 - Documented the legacy/bloat audit and refactor order.
 - Added an integration contract.
 - Added an integration registry.
-- Wrapped the existing ProNest export behind the first integration adapter without changing the existing implementation yet.
+- Moved ProNest-specific constants, mappings, material transformations, source-row selection, and dataframe creation out of the generic export service and into `integrations/pronest.py`.
+- Replaced Environmental Pneumatics-specific ProNest defaults with configurable/neutral adapter defaults.
+- Reduced `services/export_service.py` to generic spreadsheet export plus a temporary backward-compatible ProNest bridge for the legacy UI.
+- Added a regression test for configurable ProNest transformation.
 
 ## Current architecture status
 
-The new integration seam exists, but the old UI still imports ProNest directly from `services/export_service.py` and the actual ProNest transformation logic still lives there.
+ProNest is now implemented as an integration adapter rather than general inventory export logic.
 
-This is intentional incremental refactoring: establish the seam first, then migrate behavior behind it while preserving the working legacy path.
+The old Tkinter UI still calls the compatibility function in `services/export_service.py`. That wrapper resolves the ProNest integration through the registry, so existing UI behavior can remain intact while we streamline the application incrementally.
+
+The current production bottleneck is now **storage/deployment coupling**: inventory services still assume PostgreSQL and a separately configured database server.
 
 ## Exact next implementation task
 
-### Milestone 0A — Make ProNest truly modular
-
-1. Move ProNest-only constants and transformation helpers from `services/export_service.py` to `integrations/pronest.py`.
-2. Keep generic CSV/XLSX inventory export in `services/export_service.py`.
-3. Replace EP-specific export defaults with adapter configuration or neutral defaults.
-4. Change the UI export action to resolve the ProNest adapter through `integrations.get_export_integration("pronest")` rather than importing ProNest logic directly.
-5. Verify output compatibility against the current ProNest export behavior before deleting the legacy path.
-
-## Task after ProNest extraction
-
 ### Milestone 0B — Repository/data seam
 
-Create a storage interface that inventory services can call without knowing whether the underlying database is PostgreSQL or SQLite.
+Create a storage interface that inventory/application services can call without knowing whether the underlying database is PostgreSQL or SQLite.
 
-Do **not** begin by rewriting every query. Start with the smallest vertical slice needed for:
+Do **not** begin by rewriting every query. Build the smallest vertical slice needed for the primary product workflow:
 
-- initialize/open data store
-- create item
-- fetch item by barcode
-- list items
-- adjust quantity
+1. initialize/open data store
+2. create item
+3. fetch item by barcode
+4. list/search items
+5. adjust quantity
+6. record the adjustment as an inventory movement
 
-Then implement that slice using SQLite and validate the basic barcode workflow.
+Then implement that slice using SQLite while keeping the legacy PostgreSQL path available until equivalence is proven.
+
+### Required model direction for the slice
+
+Generic core fields:
+
+- id
+- sku/barcode
+- name/description
+- category/material
+- quantity
+- unit
+- location/bin/shelf
+- minimum stock
+- supplier (optional)
+- notes (optional)
+- last updated
+
+Optional manufacturing extension fields:
+
+- thickness/gauge
+- dimensions
+- grade/material details
+
+Movement record fields:
+
+- id
+- item id
+- timestamp
+- movement type (`receive`, `consume`, `adjust`)
+- quantity delta
+- resulting quantity
+- note/source (optional)
+
+## Task after the SQLite vertical slice
+
+### Milestone 0C — Primary UI simplification
+
+Replace the current all-in-one add/edit workflow with the product's primary loop:
+
+`scan/search -> item -> receive / consume / adjust -> movement recorded -> ready for next scan`
+
+Secondary actions such as import/export, labels, backup, reporting, and integrations should remain available without dominating the primary screen.
 
 ## Near-term acceptance target
 
@@ -59,6 +99,15 @@ A clean Windows user should eventually be able to:
 `download/install -> launch -> add/import item -> scan/search -> receive/consume -> close/reopen -> backup`
 
 without installing Python or PostgreSQL.
+
+## Integration rule
+
+External factory software is expected to vary.
+
+- ProNest is adapter #1.
+- A laser/CNC system, ERP, accounting package, supplier system, or customer-specific CSV mapping should become another adapter when a real workflow justifies it.
+- Integrations may translate/import/export data, validate system-specific fields, and expose configuration.
+- Integrations should not own core inventory quantity rules or force their fields throughout the core UI/data model.
 
 ## Guardrails
 
