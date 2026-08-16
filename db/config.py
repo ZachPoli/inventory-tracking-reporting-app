@@ -1,9 +1,16 @@
-# Central place for database credentials.
-# Later: move sensitive values to environment variables.
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Legacy PostgreSQL configuration.
+# Productized builds should not require a separately managed database server.
+# Keep credentials in the local environment only; never commit them.
 DB_CONFIG = {
-    "dbname": "inventory_db",
-    "user": "postgres",
-    "password": "MANman1@6",   # TODO: pull from env (e.g. os.environ.get("INV_DB_PASS"))
-    "host": "192.168.0.90",
-    "port": "5432",
+    "dbname": os.environ.get("INVENTORY_DB_NAME", "inventory_db"),
+    "user": os.environ.get("INVENTORY_DB_USER", "postgres"),
+    "password": os.environ.get("INVENTORY_DB_PASSWORD", ""),
+    "host": os.environ.get("INVENTORY_DB_HOST", "localhost"),
+    "port": os.environ.get("INVENTORY_DB_PORT", "5432"),
 }
