@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 import sqlite3
+from typing import Iterator
 
 from domain.models import InventoryItem, InventoryMovement
 from .base import InventoryRepository
@@ -15,12 +17,17 @@ class SQLiteInventoryRepository(InventoryRepository):
     def __init__(self, database_path: str | Path):
         self.database_path = Path(database_path)
 
-    def _connect(self) -> sqlite3.Connection:
+    @contextmanager
+    def _connect(self) -> Iterator[sqlite3.Connection]:
         self.database_path.parent.mkdir(parents=True, exist_ok=True)
         connection = sqlite3.connect(self.database_path)
         connection.row_factory = sqlite3.Row
         connection.execute("PRAGMA foreign_keys = ON")
-        return connection
+        try:
+            with connection:
+                yield connection
+        finally:
+            connection.close()
 
     @staticmethod
     def _now_iso() -> str:

@@ -63,6 +63,20 @@ class SQLiteInventoryRepositoryTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.repository.adjust_quantity("PART-1", -2, "consume")
 
+    def test_database_file_is_released_after_repository_operations(self):
+        created = self.repository.create_item(
+            InventoryItem(barcode="LOCK-TEST", name="Lock Test", quantity=2)
+        )
+        self.repository.get_item_by_barcode("LOCK-TEST")
+        self.repository.list_items("Lock Test")
+        self.repository.adjust_quantity("LOCK-TEST", -1, "consume")
+        self.repository.list_movements(created.id)
+        with self.assertRaises(ValueError):
+            self.repository.adjust_quantity("LOCK-TEST", -2, "consume")
+
+        self.db_path.unlink()
+        self.assertFalse(self.db_path.exists())
+
 
 if __name__ == "__main__":
     unittest.main()
