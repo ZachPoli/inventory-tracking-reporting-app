@@ -6,6 +6,14 @@
 
 Draft PR: #2 — `Productize inventory app around a streamlined modular core`
 
+Master roadmap: `docs/PRODUCT_MILESTONES.md`
+
+## Active milestone
+
+**M1 — Run Zenith Inventory on Zach's Windows PC** — GitHub Issue #3.
+
+This is the only active product milestone. Issues #4–#10 are blocked roadmap stages and should not pull work away from M1 unless a security/data-integrity problem requires attention.
+
 ## Product direction
 
 **Simple barcode-first inventory for small industrial teams that have outgrown spreadsheets but do not want a full ERP rollout.**
@@ -41,29 +49,32 @@ The Environmental Pneumatics application is the proven starting point, not the f
 - Added platform-appropriate default application-data/database paths.
 - Added repository tests covering create -> lookup/search -> consume -> movement history and negative-quantity protection.
 
-The SQLite vertical slice was validated independently before being committed.
+### Automation
+
+- Added `.github/workflows/product-core-ci.yml` to run product regression tests on Windows and Ubuntu for pushes/PRs.
+- First workflow execution still needs to be observed/confirmed in GitHub Actions; do not mark CI complete until a real run passes.
 
 ## Current architecture status
 
-There are now two paths in the repository:
+There are now two paths in the repository.
 
 ### Legacy/reference path
 
-The original Environmental Pneumatics Tkinter/PostgreSQL application remains intact as a working reference for proven features such as barcode tooling, manufacturing fields, import/export, backup/restore, and the original shop-floor workflow.
+The original Environmental Pneumatics Tkinter/PostgreSQL application remains intact as a reference for proven barcode tooling, manufacturing fields, import/export, backup/restore, and the original shop-floor workflow.
 
 ### New product path
 
-The new domain/storage/integration modules are intentionally independent of the old UI and PostgreSQL implementation. They are the foundation for the streamlined Zenith Inventory product.
+The new domain/storage/integration modules are independent of the old UI and PostgreSQL implementation. They are the foundation for the streamlined Zenith Inventory product.
 
-This avoids spending months trying to clean every historical concern out of one large legacy UI file before we can test the new product experience.
+Do not spend months cleaning every historical concern out of the large legacy UI. Port only behavior that earns a place in the product roadmap.
 
 ## Exact next implementation task
 
-### Milestone 0C — Build the new thin barcode-first UI
+### Issue #3 / M1 — Build the thin barcode-first product UI
 
-Create a new product entry point on top of `SQLiteInventoryRepository` rather than adding more responsibilities to `Inventory_Management_Fixed.py`.
+Create a new product entry point on top of `SQLiteInventoryRepository` rather than adding responsibilities to `Inventory_Management_Fixed.py`.
 
-First screen/workflow:
+First workflow:
 
 1. application opens local SQLite data store automatically
 2. scan/type barcode or SKU
@@ -74,10 +85,7 @@ First screen/workflow:
 7. user can open a simple inventory list/search view
 8. user can add a new item when a scanned barcode is unknown
 
-### First UI fields
-
-Keep the initial form intentionally small:
-
+Primary UI fields:
 - barcode/SKU
 - item name
 - category/material
@@ -86,13 +94,16 @@ Keep the initial form intentionally small:
 - location/bin/shelf
 - minimum stock
 
-Manufacturing detail can live behind an optional/details section:
-
+Optional/hidden for now:
 - thickness/gauge
 - dimensions
 - grade/material details
 - supplier
 - notes
+
+### Manufacturing-field decision
+
+Do **not** spend M1 removing thickness/gauge/dimensions from storage. They are optional and hidden from the main workflow. Revisit before external beta whether they belong in a manufacturing profile/extension instead of the generic item model.
 
 ### Not on the primary screen
 
@@ -103,46 +114,41 @@ Manufacturing detail can live behind an optional/details section:
 - every possible report
 - future ERP/machine integrations
 
-Those belong in secondary screens, optional modules, or developer tooling.
+## M1 exit gate
 
-## Task after the thin UI
+Zach must personally pass this flow on his Windows PC:
 
-### Milestone 0D — Bring proven capabilities across deliberately
+`clean clone -> launch new product -> add item -> find item -> receive -> consume -> close -> reopen -> data persists`
 
-Once the new barcode loop is pleasant to use, migrate only the valuable existing features:
+No PostgreSQL. No legacy EP application. No terminal interaction after the initial developer setup.
 
-1. CSV/XLSX import with preview/validation
-2. barcode/label printing
-3. backup/restore for the SQLite database
-4. low-stock view
-5. activity/history view
-6. generic spreadsheet export
-7. Integrations screen with ProNest as adapter #1
-
-Do not port legacy code merely because it exists.
-
-## Near-term acceptance target
-
-A clean Windows user should eventually be able to:
-
-`download/install -> launch -> add/import item -> scan/search -> receive/consume -> close/reopen -> backup`
-
-without installing Python or PostgreSQL.
+Do not start M2 until this passes.
 
 ## Integration rule
 
 External factory software is expected to vary.
 
 - ProNest is adapter #1.
-- A laser/CNC system, ERP, accounting package, supplier system, or customer-specific CSV mapping should become another adapter when a real workflow justifies it.
+- Laser/CNC systems, ERPs, accounting packages, supplier systems, APIs, and customer-specific CSV mappings become adapters when real workflows justify them.
 - Integrations may translate/import/export data, validate system-specific fields, and expose configuration.
-- Integrations should not own core inventory quantity rules or force their fields throughout the core UI/data model.
+- Integrations must not own core inventory quantity rules or force system-specific fields throughout the main UI.
+
+## Daily execution rule
+
+1. Read this file.
+2. Open the active milestone issue.
+3. Work only the next unchecked task needed for the exit gate.
+4. Run automated tests.
+5. Commit a bounded change.
+6. Update this file only when the exact next task changes.
+
+A good work session is one that moves the active exit gate closer to passing. It does not require a large amount of code.
 
 ## Guardrails
 
 - no full ERP/MRP scope
-- no cloud/multi-user work before local trial evidence
+- no cloud/multi-user work before paid/trial evidence
 - no customer-specific machine/ERP logic in the core
 - no new integration unless a real workflow justifies it
 - no deletion of legacy behavior until equivalent product behavior is verified
-- no feature porting while installation and primary inventory flow remain painful
+- no feature porting while installation and the primary inventory flow remain painful
